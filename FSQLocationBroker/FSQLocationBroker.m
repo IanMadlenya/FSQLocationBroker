@@ -5,6 +5,9 @@
 //
 
 #import "FSQLocationBroker.h"
+
+#import "FSQSignificantLocationManager.h"
+
 @import UIKit;
 
 static void *kLocationBrokerLocationSubscriberKVOContext = &kLocationBrokerLocationSubscriberKVOContext;
@@ -20,7 +23,7 @@ BOOL subscriberWantsContinuousLocation(NSObject<FSQLocationSubscriber> *location
 BOOL subscriberWantsSLCMonitoring(NSObject<FSQLocationSubscriber> *locationSubscriber);
 BOOL subscriberWantsVisitMonitoring(NSObject<FSQVisitMonitoringSubscriber> *locationSubscriber);
 
-@interface FSQLocationBroker ()
+@interface FSQLocationBroker () <FSQSignificantLocationManagerDelegate>
 
 // Publicly exposed as readonly
 @property (atomic, readwrite) NSSet *locationSubscribers;
@@ -29,7 +32,9 @@ BOOL subscriberWantsVisitMonitoring(NSObject<FSQVisitMonitoringSubscriber> *loca
 @property (atomic, copy) CLLocation *currentLocation;
 
 // Private
-@property (nonatomic) CLLocationManager *locationManager;
+@property (nonatomic, strong, readwrite) CLLocationManager *locationManager;
+@property (nonatomic, strong, readwrite) FSQSignificantLocationManager *significantLocationManager;
+
 @property (nonatomic) BOOL isMonitoringSignificantLocation, isUpdatingLocation, isMonitoringVisits;
 @property (nonatomic) dispatch_queue_t serialQueue;
 
@@ -81,6 +86,10 @@ static Class sharedInstanceClass = nil;
         
         self.currentLocation = self.locationManager.location;
         self.locationManager.delegate = self;
+        
+        self.significantLocationManager = [[FSQSignificantLocationManager alloc] init];
+        
+        self.significantLocationManager.delegate = self;
 
         self.locationSubscribers = [NSSet new];
         self.regionSubscribers = [NSSet new];
@@ -120,8 +129,9 @@ static Class sharedInstanceClass = nil;
         self.regionSubscribers = [NSSet new];
         self.visitSubscribers = [NSSet new];
         
-        [self.locationManager stopMonitoringSignificantLocationChanges];
         [self.locationManager stopUpdatingLocation];
+        
+        [self.significantLocationManager stopMonitoringSignificantLocationChanges];
         
         if ([self.locationManager respondsToSelector:@selector(stopMonitoringVisits)]) {
             [self.locationManager stopMonitoringVisits];
@@ -176,22 +186,7 @@ static Class sharedInstanceClass = nil;
     });
 }
 
-- (BOOL)shouldMonitorSignificantLocationChanges {
-    
-    BOOL isBackgrounded = applicationIsBackgrounded();
-    
-    for (NSObject<FSQLocationSubscriber> *locationSubscriber in self.locationSubscribers) {
-        if (subscriberWantsSLCMonitoring(locationSubscriber)
-            && (!isBackgrounded || subscriberShouldRunInBackground(locationSubscriber))) {
-            return YES;
-        }
-    }
-    
-    return NO;
-}
-
 - (BOOL)shouldUpdateLocations {
-
     BOOL isBackgrounded = applicationIsBackgrounded();
     
     for (NSObject<FSQLocationSubscriber> *locationSubscriber in self.locationSubscribers) {
@@ -220,8 +215,17 @@ static Class sharedInstanceClass = nil;
     return backgroundLocationModeEnabled && hasBackgroundLocationPermission && subscriberWantsBackgroundLocationUpdates;
 }
 
-- (BOOL)shouldMonitorVisits {
+- (BOOL)shouldMonitorSignificantLocationChanges {
+    for (NSObject<FSQLocationSubscriber> *locationSubscriber in self.locationSubscribers) {
+        if (subscriberWantsSLCMonitoring(locationSubscriber)) {
+            return YES;
+        }
+    }
     
+    return NO;
+}
+
+- (BOOL)shouldMonitorVisits {
     for (NSObject<FSQVisitMonitoringSubscriber> *locationSubscriber in self.visitSubscribers) {
         if (subscriberWantsVisitMonitoring(locationSubscriber)) {
             return YES;
@@ -232,7 +236,6 @@ static Class sharedInstanceClass = nil;
 }
 
 - (CLLocationAccuracy)finestGrainAccuracy {
-    
     BOOL isBackgrounded = applicationIsBackgrounded();
     
     NSSet *locationUpdatingSubscribers = [self.locationSubscribers objectsPassingTest:^BOOL(NSObject<FSQLocationSubscriber> *locationSubscriber, BOOL *stop) {
@@ -273,24 +276,20 @@ static Class sharedInstanceClass = nil;
      already is in that state just no-ops so we always call.
      */
     
-    // Should be monitoring
     if ([self shouldMonitorSignificantLocationChanges]) {
-        [self.locationManager startMonitoringSignificantLocationChanges];
+        [self.significantLocationManager startMonitoringSignificantLocationChanges];
         self.isMonitoringSignificantLocation = YES;
         
     }
-    // Should not be monitoring
     else {
-        [self.locationManager stopMonitoringSignificantLocationChanges];
+        [self.significantLocationManager stopMonitoringSignificantLocationChanges];
         self.isMonitoringSignificantLocation = NO;
     }
     
-    // Should be updating locations
     if ([self shouldUpdateLocations]) {
         [self.locationManager startUpdatingLocation];
         self.isUpdatingLocation = YES;
     }
-    // Should not be updating locations
     else {
         [self.locationManager stopUpdatingLocation];
         self.isUpdatingLocation = NO;
@@ -547,7 +546,6 @@ static Class sharedInstanceClass = nil;
 }
 
 - (void)locationManager:(CLLocationManager *)manager didEnterRegion:(CLRegion *)region {
-    
     NSString *regionsSubscriberIdentifier = [self subscriberIdentifierFromRegionIdentifier:region.identifier];
     
     if (regionsSubscriberIdentifier) {
@@ -616,7 +614,6 @@ static Class sharedInstanceClass = nil;
 }
 
 - (void)locationManager:(CLLocationManager *)manager didVisit:(CLVisit *)visit {
-    
     for (NSObject<FSQVisitMonitoringSubscriber> *visitSubscriber in self.visitSubscribers) {
         if (subscriberWantsVisitMonitoring(visitSubscriber)) {
             
@@ -625,7 +622,25 @@ static Class sharedInstanceClass = nil;
     }
 }
 
-#pragma mark - Backgrounding -
+#pragma mark - FSQSignificantLocationManagerDelegate
+
+- (void)significantLocationManager:(FSQSignificantLocationManager *)significantLocationManager didUpdateSignificantLocations:(NSArray<CLLocation *> *)significantLocations {
+    for (NSObject<FSQLocationSubscriber> *locationSubscriber in self.locationSubscribers) {
+        if (subscriberWantsSLCMonitoring(locationSubscriber)) {
+            [locationSubscriber locationManagerDidUpdateSignificantLocations:significantLocations];
+        }
+    }
+}
+
+- (void)significantLocationManager:(FSQSignificantLocationManager *)significantLocationManager didFailWithError:(NSError *)error {
+    for (NSObject<FSQLocationSubscriber> *locationSubscriber in self.locationSubscribers) {
+        if (subscriberShouldReceiveErrors(locationSubscriber)) {
+            [locationSubscriber locationManagerFailedWithError:error];
+        }
+    }
+}
+
+#pragma mark - Backgrounding
 
 - (void)applicationDidEnterBackground:(NSNotification *)notification {
     // Refresh so it will drop non-background enabled subscribers from accounting
@@ -661,7 +676,7 @@ static Class sharedInstanceClass = nil;
 
 #endif
 
-#pragma mark - KVO callbacks -
+#pragma mark - KVO callbacks
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
                       ofObject:(id)object
@@ -681,7 +696,6 @@ static Class sharedInstanceClass = nil;
 @end
 
 BOOL applicationIsBackgrounded() {
-
 #if defined(FSQ_IS_APP_EXTENSION)
     return NO;
 #else
@@ -695,8 +709,7 @@ BOOL subscriberShouldRunInBackground(NSObject<FSQLocationSubscriber> *locationSu
 }
 
 BOOL subscriberShouldReceiveLocationUpdates(NSObject<FSQLocationSubscriber> *locationSubscriber) {
-    return (locationSubscriber.locationSubscriberOptions & (FSQLocationSubscriberShouldRequestContinuousLocation 
-                                                            | FSQLocationSubscriberShouldMonitorSLCs 
+    return (locationSubscriber.locationSubscriberOptions & (FSQLocationSubscriberShouldRequestContinuousLocation
                                                             | FSQLocationSubscriberShouldReceiveAllBrokerLocations));
 }
 

@@ -16,7 +16,7 @@
 #pragma mark - FSQLocationBroker interface
 /**
  Manager for location events application-wide. Subscribers must implement the
- _FSQXXXSubscriber_ protocol and themselves to the list of subscribers in order to receive
+ _FSQXXXSubscriber_ protocol and add themselves to the list of subscribers in order to receive
  notifications from the Broker.
  
  @note When building app extension targets, you must define the FSQ_IS_APP_EXTENSION preprocessor macro to 
@@ -347,7 +347,7 @@ typedef NS_OPTIONS(NSUInteger, FSQLocationSubscriberOptions) {
  you do not refresh the subscribers list. The broker will automatically try to observe and refresh after
  values change for KVO compliant properties.
  */
-@protocol FSQLocationSubscriber<NSObject>
+@protocol FSQLocationSubscriber <NSObject>
 
 /**
  A bitmask of the configuration options for this subscriber. The broker will use this bitmask to determine
@@ -373,11 +373,11 @@ typedef NS_OPTIONS(NSUInteger, FSQLocationSubscriberOptions) {
 @property (nonatomic, readonly) CLLocationAccuracy desiredAccuracy;
 
 /**
- Significant location change and continuous location update callbacks from the system will be forwarded to this method
+ Continuous location update callbacks from the system will be forwarded to this method
  
- All SLC and continuous location updates received by the broker will be forwarded to all subscribers that requested
- either. E.g. a subscriber that only requested SLCs may receive continuous updates, or a subscriber which only 
- requested 3km accuracy will high accuracy updates if another subscriber requested 10m updates.
+ All continuous location updates received by the broker will be forwarded to all subscribers that requested
+ continuous location updates. A subscriber which only requested 3km accuracy will received high accuracy updates 
+ if another subscriber requested updates with a higher accuracy.
 
  @param locations The locations that were recieved.
  
@@ -385,6 +385,8 @@ typedef NS_OPTIONS(NSUInteger, FSQLocationSubscriberOptions) {
 
  */
 - (void)locationManagerDidUpdateLocations:(NSArray *)locations;
+
+- (void)locationManagerDidUpdateSignificantLocations:(NSArray<CLLocation *> *)significantLocations;
 
 @optional
 

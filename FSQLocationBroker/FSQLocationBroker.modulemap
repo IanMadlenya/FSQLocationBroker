@@ -1,6 +1,7 @@
 framework module FSQLocationBroker {
     
     header "FSQLocationBroker.h"
+    header "FSQSignificantLocationManager.h"
     header "FSQSingleLocationSubscriber.h"
     
     export *

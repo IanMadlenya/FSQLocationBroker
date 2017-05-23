@@ -24,6 +24,10 @@
 		F53ACF241EA5659500CC2B16 /* FSQCurrentLocationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = F53ACF231EA5659500CC2B16 /* FSQCurrentLocationTests.m */; };
 		F53ACF261EA5659600CC2B16 /* FSQLocationBroker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F18199A31BE0052E009DB90D /* FSQLocationBroker.framework */; };
 		F54F2B671EA65CC300618E44 /* FSQTestingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = F54F2B661EA65CC300618E44 /* FSQTestingHelper.m */; };
+		F5A4D1821ED4A004003220B0 /* FSQSignificantLocationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = F5DF02FA1ED49DE600051FF0 /* FSQSignificantLocationManager.m */; };
+		F5DF02FB1ED49DE600051FF0 /* FSQSignificantLocationManager.h in Headers */ = {isa = PBXBuildFile; fileRef = F5DF02F91ED49DE600051FF0 /* FSQSignificantLocationManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		F5DF02FC1ED49DE600051FF0 /* FSQSignificantLocationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = F5DF02FA1ED49DE600051FF0 /* FSQSignificantLocationManager.m */; };
+		F5DF02FD1ED49E0A00051FF0 /* FSQSignificantLocationManager.h in Headers */ = {isa = PBXBuildFile; fileRef = F5DF02F91ED49DE600051FF0 /* FSQSignificantLocationManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +58,8 @@
 		F53ACF251EA5659500CC2B16 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F54F2B651EA65CC300618E44 /* FSQTestingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FSQTestingHelper.h; sourceTree = "<group>"; };
 		F54F2B661EA65CC300618E44 /* FSQTestingHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FSQTestingHelper.m; sourceTree = "<group>"; };
+		F5DF02F91ED49DE600051FF0 /* FSQSignificantLocationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FSQSignificantLocationManager.h; sourceTree = "<group>"; };
+		F5DF02FA1ED49DE600051FF0 /* FSQSignificantLocationManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FSQSignificantLocationManager.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +118,8 @@
 			children = (
 				F14AD5941BE00CD600D59271 /* FSQLocationBroker.h */,
 				F14AD5951BE00CD600D59271 /* FSQLocationBroker.m */,
+				F5DF02F91ED49DE600051FF0 /* FSQSignificantLocationManager.h */,
+				F5DF02FA1ED49DE600051FF0 /* FSQSignificantLocationManager.m */,
 				F14AD5961BE00CD600D59271 /* FSQSingleLocationSubscriber.h */,
 				F14AD5971BE00CD600D59271 /* FSQSingleLocationSubscriber.m */,
 				F14AD5981BE00CD600D59271 /* Info.plist */,
@@ -152,6 +160,7 @@
 			files = (
 				F14AD5B61BE027FE00D59271 /* FSQSingleLocationSubscriber.h in Headers */,
 				F14AD5B71BE027FE00D59271 /* FSQLocationBroker.h in Headers */,
+				F5DF02FD1ED49E0A00051FF0 /* FSQSignificantLocationManager.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -161,6 +170,7 @@
 			files = (
 				F14AD59C1BE00CD600D59271 /* FSQSingleLocationSubscriber.h in Headers */,
 				F14AD59A1BE00CD600D59271 /* FSQLocationBroker.h in Headers */,
+				F5DF02FB1ED49DE600051FF0 /* FSQSignificantLocationManager.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -290,6 +300,7 @@
 			files = (
 				F14AD5AF1BE027FE00D59271 /* FSQLocationBroker.m in Sources */,
 				F14AD5B01BE027FE00D59271 /* FSQSingleLocationSubscriber.m in Sources */,
+				F5A4D1821ED4A004003220B0 /* FSQSignificantLocationManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -299,6 +310,7 @@
 			files = (
 				F14AD59B1BE00CD600D59271 /* FSQLocationBroker.m in Sources */,
 				F14AD59D1BE00CD600D59271 /* FSQSingleLocationSubscriber.m in Sources */,
+				F5DF02FC1ED49DE600051FF0 /* FSQSignificantLocationManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
